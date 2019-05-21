@@ -1,2 +1,11 @@
 # ignore a single file
 .classpath
+
+# ignore a single file
+.project
+
+# ignore an entire directory
+.settings/
+
+# ignore an entire directory
+/settings/
