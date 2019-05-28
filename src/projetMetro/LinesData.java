@@ -15,16 +15,18 @@ public class LinesData {
 	static List<Edge> edges = new ArrayList<Edge>();
 
 	public static void main(String[] args) {
-		String[] lines= {"1","2","3","3b","4","5","6","7","7b","8","9","10","11","12","13","14"};
-		for(String num:lines) {
-			read_stops("RATP_GTFS_LINES/RATP_GTFS_METRO_"+num+"/stops.txt");
-			read_travels("RATP_GTFS_LINES/RATP_GTFS_METRO_"+num+"/stop_times.txt");
-			
+		String[] lines = { "1", "2", "3", "3b", "4", "5", "6", "7", "7b", "8", "9", "10", "11", "12", "13", "14" };
+		for (String num : lines) {
+			read_stops("RATP_GTFS_LINES/RATP_GTFS_METRO_" + num + "/stops.txt");
+			read_travels("RATP_GTFS_LINES/RATP_GTFS_METRO_" + num + "/stop_times.txt",num);
+
 		}
-		//read_stops("RATP_GTFS_LINES/RATP_GTFS_METRO_12/stops.txt");
-		//read_travels("RATP_GTFS_LINES/RATP_GTFS_METRO_12/stop_times.txt");
-		edges.forEach(k -> System.out
-				.println(k.getStop1().getStop_id() + " " + k.getStop2().getStop_id() + " " + k.getTime()));
+		// read_stops("RATP_GTFS_LINES/RATP_GTFS_METRO_12/stops.txt");
+		// read_travels("RATP_GTFS_LINES/RATP_GTFS_METRO_12/stop_times.txt");
+		edges.stream()
+			.filter(k->k.getLine().equals("12"))
+			.forEach(k -> System.out
+				.println(k.getStop1().getStop_name() + "->" + k.getStop2().getStop_name() + ":" + k.getTime()));
 
 	}
 
@@ -45,7 +47,7 @@ public class LinesData {
 	}
 
 	// read edges from stops_times.txt
-	public static void read_travels(String filepath) {
+	public static void read_travels(String filepath, String num) {
 		List<SubwayStation> line = new ArrayList<>();
 		List<String> stop_time = new ArrayList<>();
 		List<Integer> counters = new ArrayList<>();
@@ -72,10 +74,10 @@ public class LinesData {
 			e.printStackTrace();
 		}
 		for (int i = 0; i < line.size() - 1; i++) {
-			edges.add(new Edge(line.get(i), line.get(i + 1), time_Diff(stop_time.get(i), stop_time.get(i + 1))));
+			edges.add(new Edge(
+					line.get(i), line.get(i + 1), time_Diff(stop_time.get(i), stop_time.get(i + 1)),num));
 		}
 
-		
 	}
 
 	private static SubwayStation getStationById(int id) {
