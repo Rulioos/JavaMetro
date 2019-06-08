@@ -33,6 +33,7 @@ public class Edge {
 	
 	public SubwayStation getStop1() {
 		return stop1;
+		
 	}
 
 
@@ -44,6 +45,7 @@ public class Edge {
 	}
 	public void setStop1(SubwayStation stop1) {
 		this.stop1 = stop1;
+		setDistance();
 	}
 
 	public SubwayStation getStop2() {
@@ -52,6 +54,7 @@ public class Edge {
 
 	public void setStop2(SubwayStation stop2) {
 		this.stop2 = stop2;
+		setDistance();
 	}
 
 	public int getTime() {
@@ -69,6 +72,9 @@ public class Edge {
 				Math.pow((stop2.getLat()-stop1.getLat()),2)
 				+ Math.pow((stop2.getLon()-stop1.getLon()),2)
 				);
+	}
+	public void setDistance(double dist) {
+		this.distance=dist;
 	}
 	
 	
