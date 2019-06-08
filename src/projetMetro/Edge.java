@@ -5,7 +5,7 @@ public class Edge {
 	private SubwayStation stop2;
 	private int time;//travel time
 	private String line;
-	
+	private double distance;
 	/* Constructors*/
 	
 	//For weighed graph
@@ -15,6 +15,7 @@ public class Edge {
 		this.stop2 = stop2;
 		this.time = time;
 		this.line=line;
+		setDistance();
 	}
 	//For unweighed graph
 	public Edge(SubwayStation stop1, SubwayStation stop2,String line) {
@@ -23,6 +24,8 @@ public class Edge {
 		this.stop2 = stop2;
 		this.line=line;
 	}
+	
+	//
 	
 	/*Getters and setters*/
 	
@@ -57,6 +60,15 @@ public class Edge {
 
 	public void setTime(int time) {
 		this.time = time;
+	}
+	public double getDistance() {
+		return distance;
+	}
+	public void setDistance() {
+		this.distance = Math.sqrt(
+				Math.pow((stop2.getLat()-stop1.getLat()),2)
+				+ Math.pow((stop2.getLon()-stop1.getLon()),2)
+				);
 	}
 	
 	

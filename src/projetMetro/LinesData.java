@@ -4,39 +4,37 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 public class LinesData {
 
-	static List<SubwayStation> stops = new ArrayList<SubwayStation>();
-	static List<Edge> edges = new ArrayList<Edge>();
-
-	public static void main(String[] args) {
+	public static void GettingData(List<SubwayStation> stops,List<Edge> edges) {
 		String[] lines = { "1", "2", "3", "3b", "4", "5", "6", "7", "7b", "8", "9", "10", "11", "12", "13", "14" };
 		for (String num : lines) {
-			read_stops("RATP_GTFS_LINES/RATP_GTFS_METRO_" + num + "/stops.txt");
-			read_travels("RATP_GTFS_LINES/RATP_GTFS_METRO_" + num + "/stop_times.txt",num);
+			read_stops("RATP_GTFS_LINES/RATP_GTFS_METRO_" + num + "/stops.txt",stops,edges);
+			read_travels("RATP_GTFS_LINES/RATP_GTFS_METRO_" + num + "/stop_times.txt", num,stops,edges);
 
 		}
-		// read_stops("RATP_GTFS_LINES/RATP_GTFS_METRO_12/stops.txt");
-		// read_travels("RATP_GTFS_LINES/RATP_GTFS_METRO_12/stop_times.txt");
-		edges.stream()
-			.filter(k->k.getLine().equals("12"))
-			.forEach(k -> System.out
-				.println(k.getStop1().getStop_name() + "->" + k.getStop2().getStop_name() + ":" + k.getTime()));
-
+		
 	}
+	
 
 	// read stops for file stops.txt
-	public static void read_stops(String filepath) {
+	public static void read_stops(String filepath,List<SubwayStation> stops,List<Edge> edges) {
 		try (Stream<String> stream = Files.lines(Paths.get(filepath))) {
 			stream.forEach(l -> {
 				if (!l.contains("stop_id")) {
 					String[] s = l.split(",");
-					stops.add(new SubwayStation(Integer.parseInt(s[0]), s[2], s[3]));
+					s[2]=s[2].substring(1,s[2].length()-1);
+					int id=Integer.parseInt(s[0]);
+					double lat=Double.parseDouble(s[s.length-3]);
+					double lon=Double.parseDouble(s[s.length-2]);
+					if(getStationById(id,stops)==null) {
+						stops.add(new SubwayStation(Integer.parseInt(s[0]), s[2], s[3],lat,lon));
+					}
+					//System.out.println(s[0]+":"+s[2]+":"+s[3]);
+					
 				}
 			});
 
@@ -47,7 +45,7 @@ public class LinesData {
 	}
 
 	// read edges from stops_times.txt
-	public static void read_travels(String filepath, String num) {
+	public static void read_travels(String filepath, String num,List<SubwayStation> stops,List<Edge> edges) {
 		List<SubwayStation> line = new ArrayList<>();
 		List<String> stop_time = new ArrayList<>();
 		List<Integer> counters = new ArrayList<>();
@@ -58,7 +56,7 @@ public class LinesData {
 					String[] s = l.split(",");
 					int c = Integer.parseInt(s[4]);
 					if (c > counters.get(counters.size() - 1)) {
-						SubwayStation s1 = getStationById(Integer.parseInt(s[3]));
+						SubwayStation s1 = getStationById(Integer.parseInt(s[3]),stops);
 						String time = s[2];
 						stop_time.add(time);
 						line.add(s1);
@@ -74,13 +72,12 @@ public class LinesData {
 			e.printStackTrace();
 		}
 		for (int i = 0; i < line.size() - 1; i++) {
-			edges.add(new Edge(
-					line.get(i), line.get(i + 1), time_Diff(stop_time.get(i), stop_time.get(i + 1)),num));
+			edges.add(new Edge(line.get(i), line.get(i + 1), time_Diff(stop_time.get(i), stop_time.get(i + 1)), num));
 		}
 
 	}
 
-	private static SubwayStation getStationById(int id) {
+	private static SubwayStation getStationById(int id,List<SubwayStation> stops) {
 		return stops.stream().filter(ss -> ss.getStop_id() == id).findFirst().orElse(null);
 	}
 
