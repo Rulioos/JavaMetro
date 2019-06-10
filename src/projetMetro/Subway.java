@@ -20,18 +20,11 @@ public class Subway {
 	public Subway() {
 		// gets data from RATPS_GTPS_LINES
 		LinesData.GettingData(stops, graph);
-		SubwayStation a = getStationByName("Pigalle");
-		SubwayStation b = getStationByName("Mairie d'Issy");
-		long startTime = System.currentTimeMillis();
-		IdentifyClusters();
-		// getLine("7b").forEach(e->System.out.println(e.getStop1().getStop_name()));
-		long endTime = System.currentTimeMillis();
-
-		System.out.println("That took " + (endTime - startTime) * 0.001 / 60 + " minutes");
 
 	}
 
 	public SubwayStation getStationByName(String name) {
+		//get a station by name
 		return stops.stream().filter(s -> s.getStop_name().equals(name)).findFirst().orElse(null);
 	}
 
@@ -58,7 +51,7 @@ public class Subway {
 		}
 	}
 
-	// get neighbours of a station s
+	// get adjacent nodes of a station s
 	private Map<SubwayStation, Tuple<String, Double>> getNeighbours(SubwayStation s) {
 		Map<SubwayStation, Tuple<String, Double>> n = new HashMap<>();
 		graph.stream().filter(k -> k.getStop1().equals(s) || k.getStop2().equals(s)).forEach(k -> {
@@ -89,7 +82,7 @@ public class Subway {
 		while (!queue.isEmpty()) {
 			final SubwayStation s = queue.poll();
 
-			// get unvisited voisins
+			// get unvisited adjacent nodes
 			voisins = getNeighbours(s);
 			voisins.entrySet().forEach(k -> {
 				if (!visited.get(k.getKey().getStop_name())) {
@@ -145,13 +138,18 @@ public class Subway {
 		djkDistance.put(src.getStop_name(), 0.0);
 		unsettled.add(src.getStop_name());
 		while (unsettled.size() != 0) {
-
+			//getting our current node and then removing it from unsettled
 			SubwayStation current = this
 					.getStationByName(djkDistance.entrySet().stream().filter(k -> unsettled.contains(k.getKey()))
 							.sorted(Map.Entry.comparingByValue()).findFirst().orElse(null).getKey());
 			unsettled.remove(current.getStop_name());
+			//getting adjacent node of current
 			voisins = this.getNeighbours(current);
-
+			/*
+			 * for each adjacent node, We compare the distance to the current node and find the minimum.
+			 * Then, add the adjacent node to unsettled set for future use.
+			 * At the end of the loop, we add current to settled nodes. 
+			 */
 			voisins.entrySet().forEach(kv -> {
 				SubwayStation adj = kv.getKey();
 				Double dist = kv.getValue().getE2() + djkDistance.get(current.getStop_name());
@@ -201,24 +199,33 @@ public class Subway {
 
 	// METHODS TO GET DIAMETER
 	/*
-	 * The methods
+	 * This method returns a Tuple<Diameter,Radius>. It looks for all shortest path and compare their size
+	 * to return the max.
+	 * Considering n the size of the stops and Q the time complexity of shortest path.
+	 * The complexity of this algorithm is O(n²)*Q.
+	 * For 302 stations the algorithm takes around 5 minutes to execute.
 	 */
 	public Tuple<Integer, Integer> getDiameterRadius() {
+		//initialize collections
 		Tuple<Integer, Integer> DiameterRadius = new Tuple<>(Integer.MIN_VALUE, Integer.MAX_VALUE);
 		List<Tuple<SubwayStation, SubwayStation>> visited = new ArrayList<>();
-
+		
+		//loops two times over stop
 		stops.forEach(s1 -> {
 			stops.forEach(s2 -> {
 				if (!s1.equals(s2)) {
+					// Looking for tuple already visited
 					Tuple<SubwayStation, SubwayStation> v = visited.stream()
 							.filter(e -> (e.getE1().equals(s1) && e.getE2().equals(s2))
 									|| (e.getE1().equals(s2) && e.getE2().equals(s1)))
 							.findFirst().orElse(null);
 					if (v == null) {
 						visited.add(new Tuple<SubwayStation, SubwayStation>(s1, s2));
+						//calculate the shortest path between the two stations
 						List<Edge> shortest = this.ShortestPathWDI(this.getStationByName(s1.getStop_name()),
 								this.getStationByName(s2.getStop_name()));
-
+						
+						//comparing the size 
 						int n = shortest.size();
 						if (n > DiameterRadius.getE1()) {
 							DiameterRadius.setE1(n);
@@ -230,7 +237,7 @@ public class Subway {
 				}
 			});
 		});
-
+		//returns the Tuple
 		return DiameterRadius;
 	}
 
