@@ -22,11 +22,11 @@ public class Subway {
 		SubwayStation a = getStationByName("Pigalle");
 		SubwayStation b = getStationByName("Mairie d'Issy");
 		long startTime = System.currentTimeMillis();
-		Tuple<Integer, Integer> x = this.getDiameterRadius();
-		System.out.println("Diameter: " + x.getE1() + "\n" + "Radius: " + x.getE2());
+		this.getDiameterRadius();
+		// getLine("7b").forEach(e->System.out.println(e.getStop1().getStop_name()));
 		long endTime = System.currentTimeMillis();
 
-		System.out.println("That took " + (endTime - startTime)/1000/60 + " milliseconds");
+		System.out.println("That took " + (endTime - startTime) * 0.001 / 60 + " minutes");
 
 	}
 
@@ -228,6 +228,31 @@ public class Subway {
 		});
 
 		return DiameterRadius;
+	}
+
+	// Clusters identifications
+	public void IdentifyClusters() {
+		Map<Edge, List<Tuple<SubwayStation, SubwayStation>>> clusters = new HashMap<>();
+		List<Tuple<SubwayStation, SubwayStation>> visited = new ArrayList<>();
+		
+		stops.forEach(s1 -> {
+			stops.forEach(s2 -> {
+				if (!s1.equals(s2)) {
+					Tuple<SubwayStation, SubwayStation> v = visited.stream()
+							.filter(e -> (e.getE1().equals(s1) && e.getE2().equals(s2))
+									|| (e.getE1().equals(s2) && e.getE2().equals(s1)))
+							.findFirst().orElse(null);
+					if (v == null) {
+						visited.add(new Tuple<SubwayStation, SubwayStation>(s1, s2));
+						List<Edge> shortest=this.ShortestPathWDI(s1, s2);
+						shortest.forEach(e->{
+							Edge k=clusters.entrySet().stream().filter(es->);
+						});
+						
+					}
+				}
+			});
+		});
 	}
 
 }
