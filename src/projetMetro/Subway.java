@@ -22,12 +22,11 @@ public class Subway {
 		SubwayStation a = getStationByName("Pigalle");
 		SubwayStation b = getStationByName("Mairie d'Issy");
 		long startTime = System.currentTimeMillis();
-
-		ShortestPathWDI(a, b);
-
+		Tuple<Integer, Integer> x = this.getDiameterRadius();
+		System.out.println("Diameter: " + x.getE1() + "\n" + "Radius: " + x.getE2());
 		long endTime = System.currentTimeMillis();
 
-		System.out.println("That took " + (endTime - startTime) + " milliseconds");
+		System.out.println("That took " + (endTime - startTime)/1000/60 + " milliseconds");
 
 	}
 
@@ -105,20 +104,23 @@ public class Subway {
 
 	}
 
-	public void ShortestPathUW(SubwayStation a, SubwayStation b) {
+	public List<Edge> ShortestPathUW(SubwayStation a, SubwayStation b) {
 		List<Edge> l = this.BFS(a);
+		List<Edge> shortest = new ArrayList<>();
 		Edge f = l.parallelStream().filter(e -> e.getStop2().equals(b)).findFirst().orElse(null);
+		if (f == null) {
+			return shortest;
+		}
 		SubwayStation x = f.getStop1();
-		System.out.println("FIN: " + b.getStop_name());
-
+		shortest.add(f);
 		while (!x.equals(a)) {
 			SubwayStation y = x;
-			System.out.println(" Station: " + y.getStop_name() + " Ligne suivante:" + f.getLine());
 			f = l.parallelStream().filter(e -> e.getStop2().equals(y)).findFirst().orElse(null);
 			x = f.getStop1();
+			shortest.add(f);
 
 		}
-		System.out.println("DEPART: " + x.getStop_name());
+		return shortest;
 	}
 
 	// METHODS FOR WEIGHED GRAPH
@@ -166,9 +168,7 @@ public class Subway {
 						toModify.setDistance(dist);
 						djkDistance.put(adj.getStop_name(), toModify.getDistance());
 					}
-					
-					// System.out.println(current.getStop_name()+"
-					// "+djkDistance.get(current.getStop_name()));
+
 					unsettled.add(adj.getStop_name());
 				}
 			});
@@ -177,25 +177,57 @@ public class Subway {
 		return djkTree;
 	}
 
-	public void ShortestPathWDI(SubwayStation a, SubwayStation b) {
+	// Shortest path for weigh graph
+	public List<Edge> ShortestPathWDI(SubwayStation a, SubwayStation b) {
 		List<Edge> l = this.Djikistra(a);
-		// l.forEach(k->System.out.println(k.getStop1().getStop_name()+"
-		// "+k.getStop2().getStop_name()));
+		List<Edge> shortest = new ArrayList<>();
 
 		Edge f = l.parallelStream().filter(e -> e.getStop2().equals(b)).findFirst().orElse(null);
+		if (f == null) {
+			return shortest;
+		}
 		SubwayStation x = f.getStop1();
-		System.out.println("FIN: " + b.getStop_name());
-
+		shortest.add(f);
 		while (!x.equals(a)) {
 			SubwayStation y = x;
-			System.out.println(" Station: " + y.getStop_name() + " Ligne suivante:" + f.getLine() + " Distance: "
-					+ f.getDistance());
 			f = l.parallelStream().filter(e -> e.getStop2().equals(y)).findFirst().orElse(null);
 			x = f.getStop1();
+			shortest.add(f);
 
 		}
-		System.out.println("DEPART: " + x.getStop_name());
+		return shortest;
+	}
 
+	// METHODS TO GET DIAMETER
+	public Tuple<Integer, Integer> getDiameterRadius() {
+		Tuple<Integer, Integer> DiameterRadius = new Tuple<>(Integer.MIN_VALUE, Integer.MAX_VALUE);
+		List<Tuple<SubwayStation, SubwayStation>> visited = new ArrayList<>();
+
+		stops.forEach(s1 -> {
+			stops.forEach(s2 -> {
+				if (!s1.equals(s2)) {
+					Tuple<SubwayStation, SubwayStation> v = visited.stream()
+							.filter(e -> (e.getE1().equals(s1) && e.getE2().equals(s2))
+									|| (e.getE1().equals(s2) && e.getE2().equals(s1)))
+							.findFirst().orElse(null);
+					if (v == null) {
+						visited.add(new Tuple<SubwayStation, SubwayStation>(s1, s2));
+						List<Edge> shortest = this.ShortestPathWDI(this.getStationByName(s1.getStop_name()),
+								this.getStationByName(s2.getStop_name()));
+
+						int n = shortest.size();
+						if (n > DiameterRadius.getE1()) {
+							DiameterRadius.setE1(n);
+						} else if (n < DiameterRadius.getE2() && n > 1) {
+							DiameterRadius.setE2(n);
+						}
+					}
+
+				}
+			});
+		});
+
+		return DiameterRadius;
 	}
 
 }
