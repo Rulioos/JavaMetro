@@ -1,6 +1,7 @@
 package projetMetro;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -8,7 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,7 +24,7 @@ public class Subway {
 	}
 
 	public SubwayStation getStationByName(String name) {
-		//get a station by name
+		// get a station by name
 		return stops.stream().filter(s -> s.getStop_name().equals(name)).findFirst().orElse(null);
 	}
 
@@ -138,17 +138,17 @@ public class Subway {
 		djkDistance.put(src.getStop_name(), 0.0);
 		unsettled.add(src.getStop_name());
 		while (unsettled.size() != 0) {
-			//getting our current node and then removing it from unsettled
+			// getting our current node and then removing it from unsettled
 			SubwayStation current = this
 					.getStationByName(djkDistance.entrySet().stream().filter(k -> unsettled.contains(k.getKey()))
 							.sorted(Map.Entry.comparingByValue()).findFirst().orElse(null).getKey());
 			unsettled.remove(current.getStop_name());
-			//getting adjacent node of current
+			// getting adjacent node of current
 			voisins = this.getNeighbours(current);
 			/*
-			 * for each adjacent node, We compare the distance to the current node and find the minimum.
-			 * Then, add the adjacent node to unsettled set for future use.
-			 * At the end of the loop, we add current to settled nodes. 
+			 * for each adjacent node, We compare the distance to the current node and find
+			 * the minimum. Then, add the adjacent node to unsettled set for future use. At
+			 * the end of the loop, we add current to settled nodes.
 			 */
 			voisins.entrySet().forEach(kv -> {
 				SubwayStation adj = kv.getKey();
@@ -199,20 +199,22 @@ public class Subway {
 
 	// METHODS TO GET DIAMETER
 	/*
-	 * This method returns a Tuple<Diameter,Radius>. It looks for all shortest path and compare their size
-	 * to return the max.
-	 * Considering n the size of the stops and Q the time complexity of shortest path.
-	 * The complexity of this algorithm is O(n²)*Q.
-	 * For 302 stations the algorithm takes around 5 minutes to execute.
+	 * This method returns a Tuple<Diameter,Radius>. It looks for all shortest path
+	 * and compare their size to return the max. Considering n the size of the stops
+	 * and Q the time complexity of shortest path. The complexity of this algorithm
+	 * is O(n²)*Q. For 302 stations the algorithm takes around 5 minutes to execute.
 	 */
 	public Tuple<Integer, Integer> getDiameterRadius() {
-		//initialize collections
+		// initialize collections
 		Tuple<Integer, Integer> DiameterRadius = new Tuple<>(Integer.MIN_VALUE, Integer.MAX_VALUE);
 		List<Tuple<SubwayStation, SubwayStation>> visited = new ArrayList<>();
-		
-		//loops two times over stop
+		Map<SubwayStation, Integer> diameters = new HashMap<>();
+
+		// loops two times over stop
 		stops.forEach(s1 -> {
 			stops.forEach(s2 -> {
+
+				diameters.put(s1, 2);
 				if (!s1.equals(s2)) {
 					// Looking for tuple already visited
 					Tuple<SubwayStation, SubwayStation> v = visited.stream()
@@ -221,23 +223,24 @@ public class Subway {
 							.findFirst().orElse(null);
 					if (v == null) {
 						visited.add(new Tuple<SubwayStation, SubwayStation>(s1, s2));
-						//calculate the shortest path between the two stations
+						// calculate the shortest path between the two stations
 						List<Edge> shortest = this.ShortestPathWDI(this.getStationByName(s1.getStop_name()),
 								this.getStationByName(s2.getStop_name()));
-						
-						//comparing the size 
+
+						// comparing the size
+
 						int n = shortest.size();
-						if (n > DiameterRadius.getE1()) {
-							DiameterRadius.setE1(n);
-						} else if (n < DiameterRadius.getE2() && n > 1) {
-							DiameterRadius.setE2(n);
+						if (n > diameters.get(s1)) {
+							diameters.put(s1, n);
 						}
 					}
 
 				}
 			});
 		});
-		//returns the Tuple
+		// returns the Tuple
+		DiameterRadius.setE2(Collections.min(diameters.values()));
+		DiameterRadius.setE1(Collections.max(diameters.values()));
 		return DiameterRadius;
 	}
 
