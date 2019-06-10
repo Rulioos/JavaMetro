@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,7 @@ public class Subway {
 		SubwayStation a = getStationByName("Pigalle");
 		SubwayStation b = getStationByName("Mairie d'Issy");
 		long startTime = System.currentTimeMillis();
-		this.getDiameterRadius();
+		IdentifyClusters();
 		// getLine("7b").forEach(e->System.out.println(e.getStop1().getStop_name()));
 		long endTime = System.currentTimeMillis();
 
@@ -199,6 +200,9 @@ public class Subway {
 	}
 
 	// METHODS TO GET DIAMETER
+	/*
+	 * The methods
+	 */
 	public Tuple<Integer, Integer> getDiameterRadius() {
 		Tuple<Integer, Integer> DiameterRadius = new Tuple<>(Integer.MIN_VALUE, Integer.MAX_VALUE);
 		List<Tuple<SubwayStation, SubwayStation>> visited = new ArrayList<>();
@@ -231,28 +235,58 @@ public class Subway {
 	}
 
 	// Clusters identifications
-	public void IdentifyClusters() {
+	/*
+	 * This function returns a Map<Edge,List<Tuple>> that gives for each edge the
+	 * list of shortest paths passing by this edge. The result is sorted according
+	 * to the list size.
+	 */
+	public Map<Edge, List<Tuple<SubwayStation, SubwayStation>>> IdentifyClusters() {
+		// initialize variables
 		Map<Edge, List<Tuple<SubwayStation, SubwayStation>>> clusters = new HashMap<>();
 		List<Tuple<SubwayStation, SubwayStation>> visited = new ArrayList<>();
-		
+
+		// Double loop on stops to identify all pairs
 		stops.forEach(s1 -> {
 			stops.forEach(s2 -> {
 				if (!s1.equals(s2)) {
+					// Looking for tuple already visited
 					Tuple<SubwayStation, SubwayStation> v = visited.stream()
 							.filter(e -> (e.getE1().equals(s1) && e.getE2().equals(s2))
 									|| (e.getE1().equals(s2) && e.getE2().equals(s1)))
 							.findFirst().orElse(null);
+					// if not visited
 					if (v == null) {
-						visited.add(new Tuple<SubwayStation, SubwayStation>(s1, s2));
-						List<Edge> shortest=this.ShortestPathWDI(s1, s2);
-						shortest.forEach(e->{
-							Edge k=clusters.entrySet().stream().filter(es->);
+						// visit it
+						Tuple<SubwayStation, SubwayStation> tup = new Tuple<SubwayStation, SubwayStation>(s1, s2);
+						visited.add(tup);
+						List<Edge> shortest = this.ShortestPathWDI(s1, s2);
+						/*
+						 * For each edge in the shortest path of s1 and s2 add this tuple to the edge.
+						 */
+						// checking for existing edge
+						shortest.forEach(e -> {
+							Edge k = clusters.entrySet().stream()
+									.filter(es -> (es.getKey().getStop1().equals(e.getStop1())
+											&& es.getKey().getStop2().equals(e.getStop2()))
+											|| (es.getKey().getStop1().equals(e.getStop2())
+													&& es.getKey().getStop2().equals(e.getStop1())))
+									.map(l -> l.getKey()).findFirst().orElse(null);
+
+							if (k == null) {
+								clusters.put(e, new ArrayList<>());
+								k = e;
+							}
+							clusters.get(k).add(tup);
 						});
-						
+
 					}
 				}
 			});
 		});
+
+		// sort the map
+		return clusters.entrySet().stream().sorted(Comparator.comparingInt(e -> e.getValue().size()))
+				.collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue(), (e1, e2) -> e2, LinkedHashMap::new));
 	}
 
 }
